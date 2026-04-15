@@ -1,26 +1,19 @@
 import type { ComponentType } from 'react'
 import type { NodeType } from '../engine/workflow.types'
-import type { ZodTypeAny } from 'zod'
+import { getNodeConfigDefinition } from './node-config-registry'
 import type { NodeDefinitionMeta } from './shared/node-ui.types'
 import { TriggerNode } from './trigger/TriggerNode'
-import { defaultTriggerConfig, triggerConfigSchema } from './trigger/trigger.config'
 import { ConditionNode } from './condition/ConditionNode'
-import { defaultConditionConfig, conditionConfigSchema } from './condition/condition.config'
 import { ActionNode } from './action/ActionNode'
-import { actionConfigSchema, defaultActionConfig } from './action/action.config'
 import { DelayNode } from './delay/DelayNode'
-import { defaultDelayConfig, delayConfigSchema } from './delay/delay.config'
 import { BranchNode } from './branch/BranchNode'
-import { branchConfigSchema, defaultBranchConfig } from './branch/branch.config'
 import { RetryNode } from './retry/RetryNode'
-import { defaultRetryConfig, retryConfigSchema } from './retry/retry.config'
 import { EndNode } from './end/EndNode'
-import { defaultEndConfig, endConfigSchema } from './end/end.config'
 
 export interface NodeDefinition {
   type: NodeType
   component: ComponentType<any>
-  configSchema: ZodTypeAny
+  configSchema: ReturnType<typeof getNodeConfigDefinition>['configSchema']
   defaultConfig: unknown
   meta: NodeDefinitionMeta
 }
@@ -29,8 +22,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   trigger: {
     type: 'trigger',
     component: TriggerNode,
-    configSchema: triggerConfigSchema,
-    defaultConfig: defaultTriggerConfig,
+    configSchema: getNodeConfigDefinition('trigger').configSchema,
+    defaultConfig: getNodeConfigDefinition('trigger').defaultConfig,
     meta: {
       label: 'Trigger',
       description: 'Start workflow from mock event input.',
@@ -40,8 +33,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   condition: {
     type: 'condition',
     component: ConditionNode,
-    configSchema: conditionConfigSchema,
-    defaultConfig: defaultConditionConfig,
+    configSchema: getNodeConfigDefinition('condition').configSchema,
+    defaultConfig: getNodeConfigDefinition('condition').defaultConfig,
     meta: {
       label: 'Condition',
       description: 'Route execution using true and false handles.',
@@ -51,8 +44,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   action: {
     type: 'action',
     component: ActionNode,
-    configSchema: actionConfigSchema,
-    defaultConfig: defaultActionConfig,
+    configSchema: getNodeConfigDefinition('action').configSchema,
+    defaultConfig: getNodeConfigDefinition('action').defaultConfig,
     meta: {
       label: 'Action',
       description: 'Apply deterministic action output.',
@@ -62,8 +55,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   delay: {
     type: 'delay',
     component: DelayNode,
-    configSchema: delayConfigSchema,
-    defaultConfig: defaultDelayConfig,
+    configSchema: getNodeConfigDefinition('delay').configSchema,
+    defaultConfig: getNodeConfigDefinition('delay').defaultConfig,
     meta: {
       label: 'Delay',
       description: 'Pause execution with deterministic timer.',
@@ -73,8 +66,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   branch: {
     type: 'branch',
     component: BranchNode,
-    configSchema: branchConfigSchema,
-    defaultConfig: defaultBranchConfig,
+    configSchema: getNodeConfigDefinition('branch').configSchema,
+    defaultConfig: getNodeConfigDefinition('branch').defaultConfig,
     meta: {
       label: 'Branch',
       description: 'Explicit path selection with fixed handles.',
@@ -84,8 +77,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   retry: {
     type: 'retry',
     component: RetryNode,
-    configSchema: retryConfigSchema,
-    defaultConfig: defaultRetryConfig,
+    configSchema: getNodeConfigDefinition('retry').configSchema,
+    defaultConfig: getNodeConfigDefinition('retry').defaultConfig,
     meta: {
       label: 'Retry',
       description: 'Failure-path retry policy for action node.',
@@ -95,8 +88,8 @@ export const nodeDefinitions: Record<NodeType, NodeDefinition> = {
   end: {
     type: 'end',
     component: EndNode,
-    configSchema: endConfigSchema,
-    defaultConfig: defaultEndConfig,
+    configSchema: getNodeConfigDefinition('end').configSchema,
+    defaultConfig: getNodeConfigDefinition('end').defaultConfig,
     meta: {
       label: 'End',
       description: 'Finish execution with final result status.',
