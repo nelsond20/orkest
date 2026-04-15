@@ -24,6 +24,7 @@ interface EditorState {
   setSelectedNode: (nodeId?: string) => void
   addNode: (type: NodeType, position: { x: number; y: number }) => WorkflowNode | undefined
   updateNodePosition: (nodeId: string, position: { x: number; y: number }) => void
+  setNodes: (nodes: WorkflowNode[]) => void
   updateNodeConfig: (nodeId: string, config: Record<string, unknown>) => void
   deleteNode: (nodeId: string) => void
   setEdges: (edges: WorkflowEdge[]) => void
@@ -167,6 +168,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const updatedWorkflow = touchWorkflow({
       ...workflow,
       nodes: workflow.nodes.map((node) => (node.id === nodeId ? { ...node, position } : node))
+    })
+
+    set({ workflow: updatedWorkflow, dirty: true, jsonSync: { draft: JSON.stringify(updatedWorkflow, null, 2) } })
+  },
+
+  setNodes(nodes) {
+    const workflow = get().workflow
+    if (!workflow) {
+      return
+    }
+
+    const updatedWorkflow = touchWorkflow({
+      ...workflow,
+      nodes
     })
 
     set({ workflow: updatedWorkflow, dirty: true, jsonSync: { draft: JSON.stringify(updatedWorkflow, null, 2) } })

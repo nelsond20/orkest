@@ -15,6 +15,6 @@ function renderAt(path: string) {
 describe('app router', () => {
   it('renders workflow list route', async () => {
     renderAt('/')
-    expect(await screen.findByText('Workflow list placeholder')).toBeInTheDocument()
+    expect(await screen.findByText('New Workflow')).toBeInTheDocument()
   })
 })
