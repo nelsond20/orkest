@@ -1,3 +1,5 @@
+import type { ExecutionPlan } from '../planner/planner.types'
+
 export interface RunStartedEvent {
   type: 'run:started'
   runId: string
@@ -44,3 +46,30 @@ export type WorkflowEvent =
   | StepSkippedEvent
   | StepRetriedEvent
   | RunCompletedEvent
+
+export interface RunnerTimer {
+  wait(ms: number): Promise<void>
+}
+
+export interface RunnerInput {
+  plan: ExecutionPlan
+  mockInput: Record<string, unknown>
+  onEvent?: (event: WorkflowEvent) => void
+  timer?: RunnerTimer
+  autoStepDelayMs?: number
+}
+
+export type RunnerStatus = 'idle' | 'running' | 'completed'
+
+export interface RunnerState {
+  runId: string
+  status: RunnerStatus
+  result?: 'success' | 'failed'
+  currentNodeId?: string
+}
+
+export interface WorkflowRunner {
+  step(): Promise<RunnerState>
+  runAuto(): Promise<RunnerState>
+  getState(): RunnerState
+}

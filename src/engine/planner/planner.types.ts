@@ -16,7 +16,7 @@ export interface RetryAttachment {
 export interface ExecutionStep {
   nodeId: string
   nodeType: NodeType
-  config: Record<string, unknown>
+  config: unknown
   transitions: StepTransition[]
   order: number
   retryAttachment?: RetryAttachment
