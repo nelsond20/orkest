@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import ReactFlow, { Background, type Edge, type Node } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
 import type { WorkflowDef } from '../../engine/workflow.types'
@@ -45,6 +45,7 @@ function asReadOnlyEdge(workflow: WorkflowDef | undefined, edgeId: string): Edge
 
 export function SimulatorPage() {
   const { workflowId } = useParams<{ workflowId: string }>()
+  const navigate = useNavigate()
   const [workflow, setWorkflow] = useState<WorkflowDef | undefined>()
   const [mockInputText, setMockInputText] = useState('{\n  "amount": 1500\n}')
   const [mockInputError, setMockInputError] = useState<string>()
@@ -102,6 +103,13 @@ export function SimulatorPage() {
       <Panel className="h-full" title="Simulator Canvas">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Button
+            data-testid="back-to-editor-button"
+            onClick={() => navigate(`/editor/${workflow.id}`)}
+            variant="ghost"
+          >
+            Back to Editor
+          </Button>
+          <Button
             data-testid="start-step-mode-button"
             onClick={async () => {
               if (!applyMockInput()) {
@@ -113,6 +121,9 @@ export function SimulatorPage() {
             variant="primary"
           >
             Start Step-by-step
+          </Button>
+          <Button data-testid="next-step-button" onClick={step}>
+            Next Step
           </Button>
           <Button
             data-testid="start-auto-mode-button"
@@ -126,8 +137,17 @@ export function SimulatorPage() {
           >
             Auto-run
           </Button>
-          <Button data-testid="next-step-button" onClick={step}>
-            Next Step
+          <Button
+            data-testid="start-guided-mode-button"
+            onClick={async () => {
+              if (!applyMockInput()) {
+                return
+              }
+
+              await start(workflow, 'guided')
+            }}
+          >
+            Guided Auto-run
           </Button>
           <Button data-testid="reset-run-button" onClick={reset} variant="ghost">
             Reset

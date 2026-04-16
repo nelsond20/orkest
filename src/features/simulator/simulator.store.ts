@@ -6,7 +6,7 @@ import { planWorkflow } from '../../engine/planner/planner'
 import type { ExecutionRun, StepLog } from '../history/history.types'
 import { persistence } from '../../lib/persistence/persistence'
 
-type SimulatorMode = 'step' | 'auto'
+type SimulatorMode = 'step' | 'auto' | 'guided'
 
 interface SimulatorState {
   workflow?: WorkflowDef
@@ -221,6 +221,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
     const runner = createWorkflowRunner({
       plan,
       mockInput: get().mockInput,
+      autoStepDelayMs: mode === 'guided' ? 900 : 0,
       onEvent: (event) => {
         set((state) => {
           const currentRun = state.run ?? run
@@ -239,7 +240,7 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
     set({ workflow, nodeTypes, run, mode, activeNodeId: undefined, runError: undefined })
 
     try {
-      if (mode === 'auto') {
+      if (mode === 'auto' || mode === 'guided') {
         await runner.runAuto()
         return
       }
