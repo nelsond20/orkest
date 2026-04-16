@@ -49,7 +49,7 @@ export function SimulatorPage() {
   const [mockInputText, setMockInputText] = useState('{\n  "amount": 1500\n}')
   const [mockInputError, setMockInputError] = useState<string>()
 
-  const { run, activeNodeId, start, step, reset, setMockInput } = useSimulatorStore()
+  const { run, activeNodeId, runError, start, step, reset, setMockInput } = useSimulatorStore()
 
   useEffect(() => {
     if (!workflowId) {
@@ -133,6 +133,11 @@ export function SimulatorPage() {
             Reset
           </Button>
         </div>
+        {runError ? (
+          <p className="mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300" data-testid="run-error-text">
+            {runError}
+          </p>
+        ) : null}
 
         <div className="h-[66vh] rounded-md border border-slate-800 bg-slate-950">
           <ReactFlow edges={edges} fitView nodeTypes={nodeTypes} nodes={nodes} nodesDraggable={false} nodesConnectable={false}>
@@ -157,6 +162,7 @@ export function SimulatorPage() {
             Run status: {run?.status ?? 'idle'}
           </p>
           <p className="mt-1 text-xs text-slate-400">Active node: {activeNodeId ?? 'none'}</p>
+          {runError ? <p className="mt-2 text-xs text-red-300">Simulation blocked by validation errors.</p> : null}
         </Panel>
 
         <Panel title="Step Log">

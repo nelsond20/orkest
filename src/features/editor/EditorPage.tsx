@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import ReactFlow, {
   addEdge,
@@ -112,6 +112,7 @@ export function EditorPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') === 'json' ? 'json' : 'canvas'
   const [flowInstance, setFlowInstance] = useState<ReactFlowInstance | null>(null)
+  const canvasContainerRef = useRef<HTMLDivElement | null>(null)
 
   const {
     workflow,
@@ -189,7 +190,25 @@ export function EditorPage() {
   }
 
   const handleAddNode = (type: NodeType) => {
-    addNode(type, { x: 120, y: 120 })
+    if (flowInstance && canvasContainerRef.current) {
+      const rect = canvasContainerRef.current.getBoundingClientRect()
+      const position = flowInstance.screenToFlowPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2
+      })
+      addNode(type, position)
+      return
+    }
+
+    if (selectedNode) {
+      addNode(type, {
+        x: selectedNode.position.x + 220,
+        y: selectedNode.position.y + 40
+      })
+      return
+    }
+
+    addNode(type, { x: 180, y: 180 })
   }
 
   const handleNodesChange = (changes: NodeChange[]) => {
@@ -269,6 +288,7 @@ export function EditorPage() {
 
   const canvas = (
     <div
+      ref={canvasContainerRef}
       className="rounded-lg border border-slate-800 bg-slate-900/70"
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}

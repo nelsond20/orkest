@@ -13,6 +13,7 @@ interface SimulatorState {
   nodeTypes: Record<string, NodeType>
   run?: ExecutionRun
   activeNodeId?: string
+  runError?: string
   mode: SimulatorMode
   mockInput: Record<string, unknown>
   start: (workflow: WorkflowDef, mode: SimulatorMode) => Promise<void>
@@ -64,14 +65,15 @@ function eventToRunUpdate(
   event: WorkflowEvent,
   run: ExecutionRun,
   nodeTypes: Record<string, NodeType>
-): Pick<SimulatorState, 'run' | 'activeNodeId'> {
+): Pick<SimulatorState, 'run' | 'activeNodeId' | 'runError'> {
   if (event.type === 'run:started') {
     return {
       run: {
         ...run,
         status: 'running'
       },
-      activeNodeId: undefined
+      activeNodeId: undefined,
+      runError: undefined
     }
   }
 
@@ -86,7 +88,8 @@ function eventToRunUpdate(
           startedAt: nowIso()
         })
       },
-      activeNodeId: event.nodeId
+      activeNodeId: event.nodeId,
+      runError: undefined
     }
   }
 
@@ -103,7 +106,8 @@ function eventToRunUpdate(
           output: event.output
         })
       },
-      activeNodeId: event.nodeId
+      activeNodeId: event.nodeId,
+      runError: undefined
     }
   }
 
@@ -120,7 +124,8 @@ function eventToRunUpdate(
           error: event.error
         })
       },
-      activeNodeId: event.nodeId
+      activeNodeId: event.nodeId,
+      runError: undefined
     }
   }
 
@@ -136,7 +141,8 @@ function eventToRunUpdate(
           endedAt: nowIso()
         })
       },
-      activeNodeId: run.steps.at(-1)?.nodeId
+      activeNodeId: run.steps.at(-1)?.nodeId,
+      runError: undefined
     }
   }
 
@@ -158,7 +164,8 @@ function eventToRunUpdate(
           }
         ]
       },
-      activeNodeId: event.nodeId
+      activeNodeId: event.nodeId,
+      runError: undefined
     }
   }
 
@@ -169,13 +176,15 @@ function eventToRunUpdate(
         status: event.status,
         endedAt: nowIso()
       },
-      activeNodeId: undefined
+      activeNodeId: undefined,
+      runError: undefined
     }
   }
 
   return {
     run,
-    activeNodeId: undefined
+    activeNodeId: undefined,
+    runError: undefined
   }
 }
 
@@ -184,12 +193,29 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
   nodeTypes: {},
   run: undefined,
   activeNodeId: undefined,
+  runError: undefined,
   mode: 'step',
   mockInput: {},
 
   async start(workflow, mode) {
-    const plan = planWorkflow({ workflow })
     const nodeTypes = Object.fromEntries(workflow.nodes.map((node) => [node.id, node.type])) as Record<string, NodeType>
+    let plan: ReturnType<typeof planWorkflow>
+
+    try {
+      plan = planWorkflow({ workflow })
+    } catch (error) {
+      currentSession = undefined
+      set({
+        workflow,
+        nodeTypes,
+        run: undefined,
+        activeNodeId: undefined,
+        mode,
+        runError: error instanceof Error ? error.message : 'Unable to start simulation.'
+      })
+      return
+    }
+
     const run = createRun(workflow, get().mockInput)
 
     const runner = createWorkflowRunner({
@@ -210,14 +236,21 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
     })
 
     currentSession = { runner, mode }
-    set({ workflow, nodeTypes, run, mode, activeNodeId: undefined })
+    set({ workflow, nodeTypes, run, mode, activeNodeId: undefined, runError: undefined })
 
-    if (mode === 'auto') {
-      await runner.runAuto()
-      return
+    try {
+      if (mode === 'auto') {
+        await runner.runAuto()
+        return
+      }
+
+      await runner.step()
+    } catch (error) {
+      currentSession = undefined
+      set({
+        runError: error instanceof Error ? error.message : 'Simulation failed unexpectedly.'
+      })
     }
-
-    await runner.step()
   },
 
   async step() {
@@ -225,15 +258,22 @@ export const useSimulatorStore = create<SimulatorState>((set, get) => ({
       return
     }
 
-    await currentSession.runner.step()
+    try {
+      await currentSession.runner.step()
+    } catch (error) {
+      currentSession = undefined
+      set({
+        runError: error instanceof Error ? error.message : 'Step execution failed unexpectedly.'
+      })
+    }
   },
 
   setMockInput(value) {
-    set({ mockInput: value })
+    set({ mockInput: value, runError: undefined })
   },
 
   reset() {
     currentSession = undefined
-    set({ run: undefined, activeNodeId: undefined, workflow: undefined, nodeTypes: {}, mode: 'step' })
+    set({ run: undefined, activeNodeId: undefined, workflow: undefined, nodeTypes: {}, mode: 'step', runError: undefined })
   }
 }))
