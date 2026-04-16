@@ -20,6 +20,7 @@ import { JsonViewPanel } from '../json-view/JsonViewPanel'
 import { ConfigPanel } from './ConfigPanel'
 import { useEditorStore } from './editor.store'
 import { EditorToolbar } from './EditorToolbar'
+import { ImportJsonModal } from './ImportJsonModal'
 import { NodePalette } from './NodePalette'
 
 function asReactFlowNode(node: WorkflowNode, hasError: boolean): Node {
@@ -113,6 +114,7 @@ export function EditorPage() {
   const activeTab = searchParams.get('tab') === 'json' ? 'json' : 'canvas'
   const [flowInstance, setFlowInstance] = useState<ReactFlowInstance | null>(null)
   const canvasContainerRef = useRef<HTMLDivElement | null>(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   const {
     workflow,
@@ -197,6 +199,11 @@ export function EditorPage() {
       .replace(/^-+|-+$/g, '')
 
     return `${normalized || 'workflow'}.json`
+  }
+
+  const getBaseNameFromFile = (fileName: string): string => {
+    const withoutExtension = fileName.replace(/\.[^/.]+$/, '')
+    return withoutExtension.trim() || 'Imported Workflow'
   }
 
   const handleAddNode = (type: NodeType) => {
@@ -337,14 +344,7 @@ export function EditorPage() {
           URL.revokeObjectURL(downloadUrl)
         }}
         onFitView={() => flowInstance?.fitView({ padding: 0.1 })}
-        onImportJson={() => {
-          const nextJson = window.prompt('Paste workflow JSON')
-          if (!nextJson) {
-            return
-          }
-
-          importJson(nextJson)
-        }}
+        onImportJson={() => setIsImportModalOpen(true)}
         onRun={() => {
           saveWorkflow()
           navigate(`/runs/${workflow.id}`)
@@ -399,6 +399,17 @@ export function EditorPage() {
         </div>
       )}
 
+      <ImportJsonModal
+        error={jsonSync.error}
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImportFile={async (file) => {
+          const fileText = await file.text()
+          const workflowNameOverride = getBaseNameFromFile(file.name)
+          return importJson(fileText, { workflowNameOverride })
+        }}
+        onImportText={(text) => importJson(text)}
+      />
     </div>
   )
 }

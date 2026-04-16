@@ -32,7 +32,7 @@ interface EditorState {
   validate: () => ValidationResult | undefined
   exportJson: () => string
   setJsonDraft: (draft: string) => void
-  importJson: (jsonText: string) => boolean
+  importJson: (jsonText: string, options?: { workflowNameOverride?: string }) => boolean
 }
 
 function nowIso(): string {
@@ -276,14 +276,20 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })
   },
 
-  importJson(jsonText) {
+  importJson(jsonText, options) {
     const workflow = get().workflow
     if (!workflow) {
       return false
     }
 
     try {
-      const nextWorkflow = parseWorkflowJson(jsonText)
+      const parsedWorkflow = parseWorkflowJson(jsonText)
+      const nextWorkflow: WorkflowDef = options?.workflowNameOverride
+        ? {
+            ...parsedWorkflow,
+            name: options.workflowNameOverride
+          }
+        : parsedWorkflow
       const result = validateWorkflow(nextWorkflow)
 
       if (!result.isValid) {
@@ -297,7 +303,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         return false
       }
 
-      set({ workflow: nextWorkflow, dirty: true, validation: result, jsonSync: { draft: jsonText } })
+      set({ workflow: nextWorkflow, dirty: true, validation: result, jsonSync: { draft: JSON.stringify(nextWorkflow, null, 2) } })
       return true
     } catch {
       set({
