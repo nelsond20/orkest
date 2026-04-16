@@ -53,8 +53,17 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
       return
     }
 
-    setDraftConfig(structuredClone(selectedNode.config) as unknown as DraftConfig)
-    setParseError(undefined)
+    const definition = getNodeConfigDefinition(selectedNode.type)
+    const parsedConfig = definition.configSchema.safeParse(selectedNode.config)
+
+    if (parsedConfig.success) {
+      setDraftConfig(structuredClone(parsedConfig.data) as unknown as DraftConfig)
+      setParseError(undefined)
+      return
+    }
+
+    setDraftConfig(structuredClone(definition.defaultConfig) as unknown as DraftConfig)
+    setParseError('Current node config is invalid. Defaults are shown until you apply a valid config.')
   }, [selectedNode])
 
   if (!selectedNode || !draftConfig || !configSchema) {
