@@ -1,12 +1,27 @@
 import type { StepLog as StepLogEntry } from '../history/history.types'
 
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    success: 'bg-[var(--success-bg)] text-[var(--success)]',
+    failed: 'bg-[var(--destructive-bg)] text-[var(--destructive)]',
+    cancelled: 'bg-[var(--warning-bg)] text-[var(--warning)]',
+    running: 'bg-[var(--accent-bg)] text-[var(--accent)]',
+    succeeded: 'bg-[var(--success-bg)] text-[var(--success)]',
+  }
+  return (
+    <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase tracking-wide ${styles[status] ?? 'bg-[var(--surface-2)] text-[var(--text-3)]'}`}>
+      {status || 'idle'}
+    </span>
+  )
+}
+
 interface StepLogProps {
   steps: StepLogEntry[]
 }
 
 export function StepLog({ steps }: StepLogProps) {
   if (steps.length === 0) {
-    return <p className="text-xs text-slate-400">No execution steps yet.</p>
+    return <p className="text-xs text-[var(--text-3)]">No execution steps yet.</p>
   }
 
   return (
@@ -17,28 +32,17 @@ export function StepLog({ steps }: StepLogProps) {
             data-status={step.status}
             data-testid="step-log-item"
             key={`${step.nodeId}-${step.status}-${index}`}
-            className="rounded-md border border-slate-800 bg-slate-950 p-2 text-xs"
+            className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-2.5 text-xs"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-semibold text-slate-200">
-                {step.nodeId} · {step.nodeType}
+              <span className="font-medium text-[var(--text-2)]">
+                {step.nodeId}
+                <span className="ml-1 text-[var(--text-3)]">· {step.nodeType}</span>
               </span>
-              <span
-                className={`rounded px-2 py-0.5 text-[10px] uppercase ${
-                  step.status === 'failed'
-                    ? 'bg-red-500/20 text-red-300'
-                    : step.status === 'succeeded'
-                      ? 'bg-green-500/20 text-green-300'
-                      : step.status === 'running'
-                        ? 'bg-blue-500/20 text-blue-300'
-                        : 'bg-slate-800 text-slate-300'
-                }`}
-              >
-                {step.status}
-              </span>
+              <StatusBadge status={step.status} />
             </div>
-            <p className="mt-1 text-[11px] text-slate-500">{new Date(step.startedAt).toLocaleString()}</p>
-            {step.error ? <p className="mt-1 text-[11px] text-red-300">{step.error}</p> : null}
+            <p className="mt-1 text-xs text-[var(--text-3)]">{new Date(step.startedAt).toLocaleString()}</p>
+            {step.error ? <p className="mt-1 text-xs text-[var(--destructive)]">{step.error}</p> : null}
           </li>
         ))}
       </ul>

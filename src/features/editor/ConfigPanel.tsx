@@ -69,7 +69,7 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
   if (!selectedNode || !draftConfig || !configSchema) {
     return (
       <Panel className="h-full" title="Config">
-        <p className="text-xs text-slate-400">Select a node to edit its configuration.</p>
+        <p className="text-xs text-[var(--text-3)]">Select a node to edit its configuration.</p>
       </Panel>
     )
   }
@@ -104,31 +104,33 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
       case 'end':
         return <EndConfigForm onChange={updateDraft} value={draftConfig as EndConfig} />
       default:
-        return <p className="text-xs text-slate-400">Unsupported node type.</p>
+        return <p className="text-xs text-[var(--text-3)]">Unsupported node type.</p>
     }
   }
 
   return (
     <Panel className="h-full" title="Config">
       <div className="space-y-3">
-        <div className="rounded-md border border-slate-800 bg-slate-950 px-2 py-1 text-[11px] text-slate-400">
-          <p>Node: {selectedNode.id}</p>
-          <p>Type: {selectedNode.type}</p>
+        <div className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2">
+          <p className="text-xs text-[var(--text-3)] uppercase tracking-[0.1em]">Node ID</p>
+          <p className="mt-0.5 text-xs font-medium text-[var(--text-2)]">{selectedNode.id}</p>
+          <p className="mt-2 text-xs text-[var(--text-3)] uppercase tracking-[0.1em]">Type</p>
+          <p className="mt-0.5 text-xs font-medium text-[var(--text-2)]">{selectedNode.type}</p>
         </div>
 
         {renderForm()}
 
-        {parseError ? <p className="text-xs text-red-400">{parseError}</p> : null}
+        {parseError ? <p className="text-sm text-[var(--destructive)]">{parseError}</p> : null}
 
         {errors.length > 0 ? (
-          <ul className="space-y-1 text-xs text-red-400">
+          <ul className="space-y-1 text-sm text-[var(--destructive)]">
             {errors.map((error) => (
               <li key={error}>{error}</li>
             ))}
           </ul>
         ) : null}
 
-        <Button onClick={() => onDeleteNode(selectedNode.id)} variant="ghost">
+        <Button onClick={() => onDeleteNode(selectedNode.id)} variant="danger">
           Delete Node
         </Button>
       </div>

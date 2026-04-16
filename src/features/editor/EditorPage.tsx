@@ -29,7 +29,7 @@ function asReactFlowNode(node: WorkflowNode, hasError: boolean): Node {
     type: node.type,
     position: node.position,
     data: node.config,
-    className: hasError ? 'node-error ring-2 ring-red-500 ring-offset-2 ring-offset-slate-950 rounded-md' : undefined
+    className: hasError ? 'node-error ring-2 ring-red-500 ring-offset-2 ring-offset-[var(--bg)] rounded-md' : undefined
   }
 }
 
@@ -188,7 +188,7 @@ export function EditorPage() {
   }, [workflow, selectedNodeId])
 
   if (!workflow) {
-    return <p className="text-sm text-slate-400">Workflow not found.</p>
+    return <p className="text-sm text-[var(--text-3)]">Workflow not found.</p>
   }
 
   const buildDownloadFileName = (name: string): string => {
@@ -306,7 +306,7 @@ export function EditorPage() {
   const canvas = (
     <div
       ref={canvasContainerRef}
-      className="rounded-lg border border-slate-800 bg-slate-900/70"
+      className="rounded-lg border border-[var(--border)] bg-[var(--surface)]"
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >
@@ -322,7 +322,7 @@ export function EditorPage() {
         onNodeClick={(_, node) => setSelectedNode(node.id)}
         onNodesChange={handleNodesChange}
       >
-        <Background color="#334155" gap={18} />
+        <Background color="#1a2535" gap={18} />
       </ReactFlow>
     </div>
   )

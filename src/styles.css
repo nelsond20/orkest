@@ -2,6 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design tokens ───────────────────────────────────────────────────────── */
+:root {
+  /* Backgrounds */
+  --bg: #070b10;
+  --surface: #0c1118;
+  --surface-2: #101820;
+  --surface-3: #151f2c;
+
+  /* Borders */
+  --border: #1a2535;
+  --border-subtle: #0f1822;
+
+  /* Text */
+  --text: #d4e0ec;
+  --text-2: #6a8599;
+  --text-3: #334d63;
+
+  /* Accent — Cyan (change here to retheme the entire app) */
+  --accent: #06b6d4;
+  --accent-hover: #0891b2;
+  --accent-bright: #22d3ee;
+  --accent-dim: #0e7490;
+  --accent-bg: rgba(6, 182, 212, 0.07);
+  --accent-border: rgba(6, 182, 212, 0.25);
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-hover: #dc2626;
+  --destructive-bg: rgba(239, 68, 68, 0.07);
+  --destructive-bg-hover: rgba(239, 68, 68, 0.13);
+  --destructive-border: rgba(239, 68, 68, 0.25);
+
+  /* Status */
+  --success: #22c55e;
+  --success-bg: rgba(34, 197, 94, 0.07);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.07);
+
+  /* Transitions */
+  --t-fast: 100ms ease;
+  --t-base: 180ms ease;
+  --t-slow: 300ms ease;
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────────── */
 html,
 body,
 #root {
@@ -10,7 +55,84 @@ body,
 
 body {
   margin: 0;
-  background: #0f172a;
-  color: #e5e7eb;
-  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 1px 1px, #0e1825 1px, transparent 0);
+  background-size: 28px 28px;
+  color: var(--text);
+  font-family: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ─── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-3);
+}
+
+/* ─── Selection ───────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--accent-bg);
+  color: var(--accent-bright);
+}
+
+/* ─── Animations ──────────────────────────────────────────────────────────── */
+@keyframes orkest-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes orkest-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orkest-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: orkest-fade-in var(--t-base) ease forwards;
+}
+
+.animate-slide-up {
+  animation: orkest-slide-up var(--t-base) ease forwards;
+}
+
+.animate-scale-in {
+  animation: orkest-scale-in var(--t-base) ease forwards;
+}
+
+/* Stagger helpers */
+.stagger-1 { animation-delay: 60ms; }
+.stagger-2 { animation-delay: 120ms; }
+.stagger-3 { animation-delay: 180ms; }
+.stagger-4 { animation-delay: 240ms; }
+.stagger-5 { animation-delay: 300ms; }

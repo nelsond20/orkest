@@ -15,11 +15,13 @@ export function BranchConfigForm({ value, onChange }: NodeConfigFormProps<Branch
   }
 
   return (
-    <div className="space-y-2 text-xs text-slate-300">
-      <label className="block">
-        Branch A Label
+    <div className="space-y-3">
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium uppercase tracking-[0.1em] text-[var(--text-3)]">
+          Branch A Label
+        </span>
         <input
-          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2"
+          className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-colors duration-[120ms] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] w-full"
           onChange={(event) =>
             onChange({
               ...normalizedValue,
@@ -33,10 +35,12 @@ export function BranchConfigForm({ value, onChange }: NodeConfigFormProps<Branch
         />
       </label>
 
-      <label className="block">
-        Branch B Label
+      <label className="block space-y-1.5">
+        <span className="text-xs font-medium uppercase tracking-[0.1em] text-[var(--text-3)]">
+          Branch B Label
+        </span>
         <input
-          className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-2"
+          className="rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm text-[var(--text)] outline-none transition-colors duration-[120ms] placeholder:text-[var(--text-3)] focus:border-[var(--accent)] w-full"
           onChange={(event) =>
             onChange({
               ...normalizedValue,

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Button } from '../../components/ui/Button'
+import { Modal } from '../../components/ui/Modal'
 
 type ImportMode = 'text' | 'file'
 
@@ -20,99 +21,90 @@ export function ImportJsonModal({ isOpen, error, onClose, onImportText, onImport
 
   const mergedError = useMemo(() => localError ?? error, [localError, error])
 
-  if (!isOpen) {
-    return null
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4">
-      <div className="w-full max-w-2xl rounded-lg border border-slate-800 bg-slate-900 p-4 shadow-2xl">
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-200">Import Workflow JSON</h2>
-          <Button onClick={onClose} variant="ghost">
-            Close
+    <Modal isOpen={isOpen} onClose={onClose} title="Import Workflow JSON" maxWidth="max-w-2xl">
+      <div className="mb-4 flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--bg)] p-1">
+        {(['text', 'file'] as const).map((m) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-all duration-[120ms] cursor-pointer ${
+              mode === m
+                ? 'bg-[var(--surface-3)] text-[var(--text)]'
+                : 'text-[var(--text-2)] hover:text-[var(--text)]'
+            }`}
+            type="button"
+          >
+            {m === 'text' ? 'Paste JSON' : 'From File'}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'text' ? (
+        <div className="space-y-3">
+          <textarea
+            className="h-64 w-full resize-none rounded-md border border-[var(--border)] bg-[var(--bg)] p-3 font-mono text-xs text-[var(--text)] outline-none transition-colors duration-[120ms] placeholder:text-[var(--text-3)] focus:border-[var(--accent)]"
+            onChange={(event) => { setTextValue(event.target.value); setLocalError(undefined) }}
+            placeholder="Paste full workflow JSON here..."
+            value={textValue}
+          />
+          <Button
+            onClick={() => {
+              const success = onImportText(textValue)
+              if (!success) return
+              setTextValue('')
+              setLocalError(undefined)
+              onClose()
+            }}
+            variant="primary"
+          >
+            Import
           </Button>
         </div>
-
-        <div className="mb-3 flex gap-2">
-          <Button onClick={() => setMode('text')} variant={mode === 'text' ? 'primary' : 'secondary'}>
-            Import From Text
-          </Button>
-          <Button onClick={() => setMode('file')} variant={mode === 'file' ? 'primary' : 'secondary'}>
-            Import From Device
-          </Button>
-        </div>
-
-        {mode === 'text' ? (
-          <div className="space-y-3">
-            <textarea
-              className="h-72 w-full rounded-md border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-100 outline-none focus:border-blue-500"
-              onChange={(event) => {
-                setTextValue(event.target.value)
-                setLocalError(undefined)
-              }}
-              placeholder="Paste full workflow JSON here"
-              value={textValue}
-            />
-            <Button
-              onClick={() => {
-                const success = onImportText(textValue)
-                if (!success) {
-                  return
-                }
-
-                setTextValue('')
-                setLocalError(undefined)
-                onClose()
-              }}
-              variant="primary"
-            >
-              Import Text JSON
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
+      ) : (
+        <div className="space-y-3">
+          <label className="block">
+            <div className="flex cursor-pointer items-center gap-3 rounded-md border border-dashed border-[var(--border)] bg-[var(--bg)] px-4 py-6 transition-colors duration-[120ms] hover:border-[var(--accent-border)]">
+              <span className="text-xl text-[var(--text-3)]">↑</span>
+              <div>
+                <p className="text-xs font-medium text-[var(--text-2)]">
+                  {selectedFile ? selectedFile.name : 'Choose a JSON file'}
+                </p>
+                <p className="mt-0.5 text-[11px] text-[var(--text-3)]">
+                  {selectedFile ? `${(selectedFile.size / 1024).toFixed(1)} KB` : '.json files only'}
+                </p>
+              </div>
+            </div>
             <input
               accept=".json,application/json"
-              className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-200 file:mr-3 file:rounded file:border-0 file:bg-slate-700 file:px-2 file:py-1 file:text-xs file:text-slate-100"
-              onChange={(event) => {
-                const nextFile = event.target.files?.[0]
-                setSelectedFile(nextFile)
-                setLocalError(undefined)
-              }}
+              className="sr-only"
+              onChange={(event) => { setSelectedFile(event.target.files?.[0]); setLocalError(undefined) }}
               type="file"
             />
-            {selectedFile ? <p className="text-xs text-slate-400">Selected file: {selectedFile.name}</p> : null}
-            <Button
-              disabled={!selectedFile || isImporting}
-              onClick={async () => {
-                if (!selectedFile) {
-                  setLocalError('Select a JSON file before importing.')
-                  return
-                }
+          </label>
+          <Button
+            disabled={!selectedFile || isImporting}
+            onClick={async () => {
+              if (!selectedFile) { setLocalError('Select a JSON file before importing.'); return }
+              setIsImporting(true)
+              setLocalError(undefined)
+              const success = await onImportFile(selectedFile)
+              setIsImporting(false)
+              if (!success) return
+              setSelectedFile(undefined)
+              setLocalError(undefined)
+              onClose()
+            }}
+            variant="primary"
+          >
+            {isImporting ? 'Importing...' : 'Import File'}
+          </Button>
+        </div>
+      )}
 
-                setIsImporting(true)
-                setLocalError(undefined)
-                const success = await onImportFile(selectedFile)
-                setIsImporting(false)
-
-                if (!success) {
-                  return
-                }
-
-                setSelectedFile(undefined)
-                setLocalError(undefined)
-                onClose()
-              }}
-              variant="primary"
-            >
-              {isImporting ? 'Importing...' : 'Import File JSON'}
-            </Button>
-          </div>
-        )}
-
-        {mergedError ? <p className="mt-3 text-xs text-red-400">{mergedError}</p> : null}
-      </div>
-    </div>
+      {mergedError ? (
+        <p className="mt-3 text-xs text-[var(--destructive)]">{mergedError}</p>
+      ) : null}
+    </Modal>
   )
 }

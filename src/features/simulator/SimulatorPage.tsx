@@ -10,6 +10,21 @@ import { nodeDefinitions } from '../../nodes/node-registry'
 import { useSimulatorStore } from './simulator.store'
 import { StepLog } from './StepLog'
 
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    success: 'bg-[var(--success-bg)] text-[var(--success)]',
+    failed: 'bg-[var(--destructive-bg)] text-[var(--destructive)]',
+    cancelled: 'bg-[var(--warning-bg)] text-[var(--warning)]',
+    running: 'bg-[var(--accent-bg)] text-[var(--accent)]',
+    succeeded: 'bg-[var(--success-bg)] text-[var(--success)]',
+  }
+  return (
+    <span className={`rounded px-2 py-0.5 text-xs font-medium uppercase tracking-wide ${styles[status] ?? 'bg-[var(--surface-2)] text-[var(--text-3)]'}`}>
+      {status || 'idle'}
+    </span>
+  )
+}
+
 function asReadOnlyNode(workflow: WorkflowDef | undefined, nodeId: string, activeNodeId?: string): Node | undefined {
   const node = workflow?.nodes.find((item) => item.id === nodeId)
 
@@ -23,7 +38,7 @@ function asReadOnlyNode(workflow: WorkflowDef | undefined, nodeId: string, activ
     position: node.position,
     data: node.config,
     draggable: false,
-    className: activeNodeId === node.id ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-slate-950 rounded-md' : undefined
+    className: activeNodeId === node.id ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--bg)] rounded-md' : undefined
   }
 }
 
@@ -83,7 +98,7 @@ export function SimulatorPage() {
   }, [workflow])
 
   if (!workflow) {
-    return <p className="text-sm text-slate-400">Workflow not found for simulator.</p>
+    return <p className="text-sm text-[var(--text-3)]">Workflow not found for simulator.</p>
   }
 
   const applyMockInput = () => {
@@ -122,7 +137,7 @@ export function SimulatorPage() {
           >
             Start Step-by-step
           </Button>
-          <Button data-testid="next-step-button" onClick={step}>
+          <Button data-testid="next-step-button" onClick={step} variant="secondary">
             Next Step
           </Button>
           <Button
@@ -134,6 +149,7 @@ export function SimulatorPage() {
 
               await start(workflow, 'auto')
             }}
+            variant="secondary"
           >
             Auto-run
           </Button>
@@ -146,6 +162,7 @@ export function SimulatorPage() {
 
               await start(workflow, 'guided')
             }}
+            variant="secondary"
           >
             Guided Auto-run
           </Button>
@@ -154,14 +171,14 @@ export function SimulatorPage() {
           </Button>
         </div>
         {runError ? (
-          <p className="mb-3 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300" data-testid="run-error-text">
+          <div className="mb-3 rounded-lg border border-[var(--destructive-border,rgba(239,68,68,0.25))] bg-[var(--destructive-bg)] px-4 py-3 text-sm text-[var(--destructive)]" data-testid="run-error-text">
             {runError}
-          </p>
+          </div>
         ) : null}
 
-        <div className="h-[66vh] rounded-md border border-slate-800 bg-slate-950">
+        <div className="h-[66vh] rounded-md border border-[var(--border)] bg-[var(--surface)]">
           <ReactFlow edges={edges} fitView nodeTypes={nodeTypes} nodes={nodes} nodesDraggable={false} nodesConnectable={false}>
-            <Background color="#334155" gap={18} />
+            <Background color="#1a2535" gap={18} />
           </ReactFlow>
         </div>
       </Panel>
@@ -169,20 +186,28 @@ export function SimulatorPage() {
       <div className="space-y-3">
         <Panel title="Mock Input">
           <textarea
-            className="h-36 w-full rounded-md border border-slate-700 bg-slate-950 p-2 font-mono text-xs text-slate-100"
+            className="h-36 w-full resize-none rounded-md border border-[var(--border)] bg-[var(--bg)] p-3 font-mono text-xs text-[var(--text)] outline-none transition-colors duration-[120ms] focus:border-[var(--accent)]"
             onChange={(event) => setMockInputText(event.target.value)}
             value={mockInputText}
           />
-          {mockInputError ? <p className="mt-2 text-xs text-red-400">{mockInputError}</p> : null}
+          {mockInputError ? <p className="mt-2 text-sm text-[var(--destructive)]">{mockInputError}</p> : null}
         </Panel>
 
         <Panel title="Run Status">
-          <p className="text-xs text-slate-300">Workflow: {workflow.name}</p>
-          <p className="mt-1 text-xs text-slate-300" data-testid="run-status-text">
-            Run status: {run?.status ?? 'idle'}
-          </p>
-          <p className="mt-1 text-xs text-slate-400">Active node: {activeNodeId ?? 'none'}</p>
-          {runError ? <p className="mt-2 text-xs text-red-300">Simulation blocked by validation errors.</p> : null}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.1em] text-[var(--text-3)]">Workflow</span>
+              <span className="text-sm text-[var(--text-2)]">{workflow.name}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.1em] text-[var(--text-3)]">Status</span>
+              <StatusBadge status={run?.status ?? 'idle'} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase tracking-[0.1em] text-[var(--text-3)]">Active Node</span>
+              <span className="text-sm text-[var(--text-2)]" data-testid="run-status-text">{activeNodeId ?? '—'}</span>
+            </div>
+          </div>
         </Panel>
 
         <Panel title="Step Log">
