@@ -1,8 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Panel } from '../../components/ui/Panel'
-import { getNodeConfigDefinition } from '../../nodes/node-config-registry'
 import type { WorkflowNode } from '../../engine/workflow.types'
 import { Button } from '../../components/ui/Button'
+import { getNodeConfigDefinition } from '../../nodes/node-config-registry'
+import { TriggerConfigForm } from '../../nodes/trigger/TriggerConfigForm'
+import { ConditionConfigForm } from '../../nodes/condition/ConditionConfigForm'
+import { ActionConfigForm } from '../../nodes/action/ActionConfigForm'
+import { DelayConfigForm } from '../../nodes/delay/DelayConfigForm'
+import { BranchConfigForm } from '../../nodes/branch/BranchConfigForm'
+import { RetryConfigForm } from '../../nodes/retry/RetryConfigForm'
+import { EndConfigForm } from '../../nodes/end/EndConfigForm'
+import type { TriggerConfig } from '../../nodes/trigger/trigger.types'
+import type { ConditionConfig } from '../../nodes/condition/condition.types'
+import type { ActionConfig } from '../../nodes/action/action.types'
+import type { DelayConfig } from '../../nodes/delay/delay.types'
+import type { BranchConfig } from '../../nodes/branch/branch.types'
+import type { RetryConfig } from '../../nodes/retry/retry.types'
+import type { EndConfig } from '../../nodes/end/end.types'
 
 interface ConfigPanelProps {
   selectedNode?: WorkflowNode
@@ -11,22 +25,39 @@ interface ConfigPanelProps {
   onDeleteNode: (nodeId: string) => void
 }
 
+type DraftConfig =
+  | TriggerConfig
+  | ConditionConfig
+  | ActionConfig
+  | DelayConfig
+  | BranchConfig
+  | RetryConfig
+  | EndConfig
+
 export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode }: ConfigPanelProps) {
-  const [draft, setDraft] = useState('')
+  const [draftConfig, setDraftConfig] = useState<DraftConfig | null>(null)
   const [parseError, setParseError] = useState<string>()
+
+  const configSchema = useMemo(() => {
+    if (!selectedNode) {
+      return undefined
+    }
+
+    return getNodeConfigDefinition(selectedNode.type).configSchema
+  }, [selectedNode])
 
   useEffect(() => {
     if (!selectedNode) {
-      setDraft('')
+      setDraftConfig(null)
       setParseError(undefined)
       return
     }
 
-    setDraft(JSON.stringify(selectedNode.config, null, 2))
+    setDraftConfig(structuredClone(selectedNode.config) as unknown as DraftConfig)
     setParseError(undefined)
   }, [selectedNode])
 
-  if (!selectedNode) {
+  if (!selectedNode || !draftConfig || !configSchema) {
     return (
       <Panel className="h-full" title="Config">
         <p className="text-xs text-slate-400">Select a node to edit its configuration.</p>
@@ -34,22 +65,37 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
     )
   }
 
-  const schema = getNodeConfigDefinition(selectedNode.type).configSchema
+  const updateDraft = (nextConfig: DraftConfig) => {
+    setDraftConfig(nextConfig)
+    const validationResult = configSchema.safeParse(nextConfig)
 
-  const applyConfig = () => {
-    try {
-      const parsed = JSON.parse(draft) as Record<string, unknown>
-      const result = schema.safeParse(parsed)
+    if (!validationResult.success) {
+      setParseError(validationResult.error.issues[0]?.message ?? 'Invalid config payload.')
+      return
+    }
 
-      if (!result.success) {
-        setParseError(result.error.issues[0]?.message ?? 'Invalid config payload.')
-        return
-      }
+    setParseError(undefined)
+    onApplyConfig(selectedNode.id, nextConfig as unknown as Record<string, unknown>)
+  }
 
-      setParseError(undefined)
-      onApplyConfig(selectedNode.id, parsed)
-    } catch {
-      setParseError('Invalid JSON format.')
+  const renderForm = () => {
+    switch (selectedNode.type) {
+      case 'trigger':
+        return <TriggerConfigForm onChange={updateDraft} value={draftConfig as TriggerConfig} />
+      case 'condition':
+        return <ConditionConfigForm onChange={updateDraft} value={draftConfig as ConditionConfig} />
+      case 'action':
+        return <ActionConfigForm onChange={updateDraft} value={draftConfig as ActionConfig} />
+      case 'delay':
+        return <DelayConfigForm onChange={updateDraft} value={draftConfig as DelayConfig} />
+      case 'branch':
+        return <BranchConfigForm onChange={updateDraft} value={draftConfig as BranchConfig} />
+      case 'retry':
+        return <RetryConfigForm onChange={updateDraft} value={draftConfig as RetryConfig} />
+      case 'end':
+        return <EndConfigForm onChange={updateDraft} value={draftConfig as EndConfig} />
+      default:
+        return <p className="text-xs text-slate-400">Unsupported node type.</p>
     }
   }
 
@@ -61,11 +107,7 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
           <p>Type: {selectedNode.type}</p>
         </div>
 
-        <textarea
-          className="h-[260px] w-full rounded-md border border-slate-700 bg-slate-950 p-2 font-mono text-xs text-slate-100 outline-none focus:border-blue-500"
-          onChange={(event) => setDraft(event.target.value)}
-          value={draft}
-        />
+        {renderForm()}
 
         {parseError ? <p className="text-xs text-red-400">{parseError}</p> : null}
 
@@ -77,12 +119,9 @@ export function ConfigPanel({ selectedNode, errors, onApplyConfig, onDeleteNode 
           </ul>
         ) : null}
 
-        <div className="flex gap-2">
-          <Button onClick={applyConfig}>Apply Config</Button>
-          <Button onClick={() => onDeleteNode(selectedNode.id)} variant="ghost">
-            Delete Node
-          </Button>
-        </div>
+        <Button onClick={() => onDeleteNode(selectedNode.id)} variant="ghost">
+          Delete Node
+        </Button>
       </div>
     </Panel>
   )

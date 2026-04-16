@@ -16,6 +16,12 @@ export function BranchNode({ data }: NodeProps<BranchConfig>) {
           ))}
         </div>
       </NodeCard>
+      <span className="pointer-events-none absolute right-3 top-[26%] text-[10px] uppercase text-slate-400">
+        {data.options[0]?.label ?? 'Branch A'}
+      </span>
+      <span className="pointer-events-none absolute right-3 top-[56%] text-[10px] uppercase text-slate-400">
+        {data.options[1]?.label ?? 'Branch B'}
+      </span>
       <Handle id="branch-a" position={Position.Right} style={{ top: '35%' }} type="source" />
       <Handle id="branch-b" position={Position.Right} style={{ top: '65%' }} type="source" />
     </>
