@@ -53,6 +53,38 @@ function saveRuns(runs: ExecutionRun[]) {
   localStorage.setItem(storageKeys.runs, JSON.stringify(runs))
 }
 
+function normalizeWorkflowName(name: string): string {
+  const trimmed = name.trim()
+  if (trimmed.length > 0) {
+    return trimmed
+  }
+
+  return 'Untitled Workflow'
+}
+
+function ensureUniqueWorkflowName(name: string, workflowId: string, existingWorkflows: WorkflowDef[]): string {
+  const normalized = normalizeWorkflowName(name)
+  const occupiedNames = new Set(
+    existingWorkflows
+      .filter((workflow) => workflow.id !== workflowId)
+      .map((workflow) => workflow.name)
+  )
+
+  if (!occupiedNames.has(normalized)) {
+    return normalized
+  }
+
+  let suffix = 1
+  let candidate = `${normalized} (${suffix})`
+
+  while (occupiedNames.has(candidate)) {
+    suffix += 1
+    candidate = `${normalized} (${suffix})`
+  }
+
+  return candidate
+}
+
 export const persistence: PersistenceApi = {
   listWorkflows() {
     return loadWorkflows().sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
@@ -65,16 +97,20 @@ export const persistence: PersistenceApi = {
   saveWorkflow(workflow) {
     const validatedWorkflow = workflowSchema.parse(workflow)
     const workflows = loadWorkflows()
-    const index = workflows.findIndex((item) => item.id === validatedWorkflow.id)
+    const nextWorkflow: WorkflowDef = {
+      ...validatedWorkflow,
+      name: ensureUniqueWorkflowName(validatedWorkflow.name, validatedWorkflow.id, workflows)
+    }
+    const index = workflows.findIndex((item) => item.id === nextWorkflow.id)
 
     if (index === -1) {
-      workflows.push(validatedWorkflow)
+      workflows.push(nextWorkflow)
     } else {
-      workflows[index] = validatedWorkflow
+      workflows[index] = nextWorkflow
     }
 
     saveWorkflows(workflows)
-    return validatedWorkflow
+    return nextWorkflow
   },
 
   deleteWorkflow(id) {

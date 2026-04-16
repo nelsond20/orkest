@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Panel } from '../../components/ui/Panel'
+import { validateWorkflow } from '../../engine/validator/validator'
 import type { WorkflowDef } from '../../engine/workflow.types'
 import { persistence } from '../../lib/persistence/persistence'
 import { workflowTemplates } from '../../templates'
 import { useEditorStore } from './editor.store'
+import { ImportJsonModal } from './ImportJsonModal'
 
 function useWorkflows() {
   const [workflows, setWorkflows] = useState<WorkflowDef[]>([])
@@ -27,6 +29,8 @@ function useWorkflows() {
 export function WorkflowListPage() {
   const navigate = useNavigate()
   const [showTemplatePicker, setShowTemplatePicker] = useState(false)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [importError, setImportError] = useState<string>()
   const { createWorkflow, createFromTemplate, saveWorkflow } = useEditorStore()
   const { workflows, reload } = useWorkflows()
 
@@ -47,6 +51,83 @@ export function WorkflowListPage() {
     navigate(`/editor/${created.id}`)
   }
 
+  const nowIso = () => new Date().toISOString()
+
+  const createWorkflowId = () => {
+    return typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? `workflow-${crypto.randomUUID()}`
+      : `workflow-${Date.now()}`
+  }
+
+  const getBaseNameFromFile = (fileName: string): string => {
+    const withoutExtension = fileName.replace(/\.[^/.]+$/, '')
+    return withoutExtension.trim() || 'Imported Workflow'
+  }
+
+  const buildImportedWorkflow = (
+    jsonText: string,
+    options?: { workflowNameOverride?: string }
+  ): { workflow?: WorkflowDef; error?: string } => {
+    try {
+      const parsed = JSON.parse(jsonText) as WorkflowDef
+      const name = options?.workflowNameOverride ?? parsed.name ?? 'Imported Workflow'
+      const timestamp = nowIso()
+
+      const importedWorkflow: WorkflowDef = {
+        ...parsed,
+        id: createWorkflowId(),
+        name,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
+
+      const validation = validateWorkflow(importedWorkflow)
+      if (!validation.isValid) {
+        return {
+          error: validation.errors[0]?.message ?? 'Imported workflow is invalid.'
+        }
+      }
+
+      return { workflow: importedWorkflow }
+    } catch {
+      return {
+        error: 'Invalid JSON format.'
+      }
+    }
+  }
+
+  const importWorkflowFromText = (jsonText: string): boolean => {
+    const result = buildImportedWorkflow(jsonText)
+    if (!result.workflow) {
+      setImportError(result.error ?? 'Unable to import workflow.')
+      return false
+    }
+
+    const savedWorkflow = persistence.saveWorkflow(result.workflow)
+    setImportError(undefined)
+    reload()
+    navigate(`/editor/${savedWorkflow.id}`)
+    return true
+  }
+
+  const importWorkflowFromFile = async (file: File): Promise<boolean> => {
+    const fileText = await file.text()
+    const result = buildImportedWorkflow(fileText, {
+      workflowNameOverride: getBaseNameFromFile(file.name)
+    })
+
+    if (!result.workflow) {
+      setImportError(result.error ?? 'Unable to import workflow.')
+      return false
+    }
+
+    const savedWorkflow = persistence.saveWorkflow(result.workflow)
+    setImportError(undefined)
+    reload()
+    navigate(`/editor/${savedWorkflow.id}`)
+    return true
+  }
+
   return (
     <div className="space-y-4">
       <Panel className="p-1">
@@ -58,6 +139,15 @@ export function WorkflowListPage() {
             </Button>
             <Button data-testid="template-picker-button" onClick={() => setShowTemplatePicker((current) => !current)}>
               From Template
+            </Button>
+            <Button
+              data-testid="workflow-import-button"
+              onClick={() => {
+                setImportError(undefined)
+                setIsImportModalOpen(true)
+              }}
+            >
+              Import JSON
             </Button>
           </div>
         </div>
@@ -105,6 +195,17 @@ export function WorkflowListPage() {
           ))}
         </div>
       )}
+
+      <ImportJsonModal
+        error={importError}
+        isOpen={isImportModalOpen}
+        onClose={() => {
+          setImportError(undefined)
+          setIsImportModalOpen(false)
+        }}
+        onImportFile={importWorkflowFromFile}
+        onImportText={importWorkflowFromText}
+      />
     </div>
   )
 }
