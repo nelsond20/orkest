@@ -193,22 +193,55 @@ export function EditorPage() {
   }
 
   const handleNodesChange = (changes: NodeChange[]) => {
-    const updatedNodes = applyNodeChanges(changes, nodes)
+    const persistedChanges = changes.filter((change) => change.type === 'position' || change.type === 'remove')
+    if (persistedChanges.length === 0) {
+      return
+    }
+
+    const latestWorkflow = useEditorStore.getState().workflow
+    if (!latestWorkflow) {
+      return
+    }
+
+    const latestNodesById = new Map(latestWorkflow.nodes.map((node) => [node.id, node]))
+    const latestNodes = latestWorkflow.nodes.map((node) => asReactFlowNode(node, false))
+
+    const updatedNodes = applyNodeChanges(persistedChanges, latestNodes)
       .filter((node) => !node.hidden)
-      .map((node) => asWorkflowNode(node, nodesById.get(node.id)))
+      .map((node) => asWorkflowNode(node, latestNodesById.get(node.id)))
 
     setNodes(updatedNodes)
   }
 
   const handleEdgesChange = (changes: EdgeChange[]) => {
-    const updatedEdges = applyEdgeChanges(changes, edges).map(asWorkflowEdge)
+    const persistedChanges = changes.filter((change) => change.type !== 'select')
+    if (persistedChanges.length === 0) {
+      return
+    }
+
+    const latestWorkflow = useEditorStore.getState().workflow
+    if (!latestWorkflow) {
+      return
+    }
+
+    const latestEdges = latestWorkflow.edges.map(asReactFlowEdge)
+    const updatedEdges = applyEdgeChanges(persistedChanges, latestEdges).map(asWorkflowEdge)
     setEdges(updatedEdges)
   }
 
   const handleConnect = (connection: Connection) => {
-    if (!isValidConnection(connection, nodesById, workflow.edges)) {
+    const latestWorkflow = useEditorStore.getState().workflow
+    if (!latestWorkflow) {
       return
     }
+
+    const latestNodesById = new Map(latestWorkflow.nodes.map((node) => [node.id, node]))
+
+    if (!isValidConnection(connection, latestNodesById, latestWorkflow.edges)) {
+      return
+    }
+
+    const latestEdges = latestWorkflow.edges.map(asReactFlowEdge)
 
     const nextEdge = addEdge(
       {
@@ -216,7 +249,7 @@ export function EditorPage() {
         id: `edge-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         animated: connection.sourceHandle === 'failed'
       },
-      edges
+      latestEdges
     )
 
     setEdges(nextEdge.map(asWorkflowEdge))
