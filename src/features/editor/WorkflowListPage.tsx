@@ -53,10 +53,12 @@ export function WorkflowListPage() {
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-lg font-semibold">Workflows</h1>
           <div className="flex items-center gap-2">
-            <Button onClick={createNewWorkflow} variant="primary">
+            <Button data-testid="create-workflow-button" onClick={createNewWorkflow} variant="primary">
               New Workflow
             </Button>
-            <Button onClick={() => setShowTemplatePicker((current) => !current)}>From Template</Button>
+            <Button data-testid="template-picker-button" onClick={() => setShowTemplatePicker((current) => !current)}>
+              From Template
+            </Button>
           </div>
         </div>
       </Panel>
@@ -66,6 +68,7 @@ export function WorkflowListPage() {
           <div className="grid gap-2 md:grid-cols-3">
             {workflowTemplates.map((template) => (
               <button
+                data-testid={`template-option-${template.id}`}
                 key={template.id}
                 className="rounded-md border border-slate-800 bg-slate-950 px-3 py-3 text-left hover:border-slate-600"
                 onClick={() => createWithTemplate(template.id)}
@@ -87,6 +90,7 @@ export function WorkflowListPage() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {workflows.map((workflow) => (
             <button
+              data-testid={`workflow-card-${workflow.id}`}
               key={workflow.id}
               className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-left hover:border-slate-600"
               onClick={() => navigate(`/editor/${workflow.id}`)}

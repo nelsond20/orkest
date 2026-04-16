@@ -15,6 +15,7 @@ export function JsonViewPanel({ value, error, onChange, onApply, onCopy, onImpor
     <Panel className="h-full" title="Workflow JSON">
       <div className="flex h-full flex-col gap-3">
         <textarea
+          data-testid="json-editor-textarea"
           className="h-[70vh] w-full rounded-md border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-100 outline-none focus:border-blue-500"
           onChange={(event) => onChange(event.target.value)}
           value={value}
@@ -23,11 +24,15 @@ export function JsonViewPanel({ value, error, onChange, onApply, onCopy, onImpor
         {error ? <p className="text-xs text-red-400">{error}</p> : null}
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={onApply} variant="primary">
+          <Button data-testid="apply-json-button" onClick={onApply} variant="primary">
             Apply JSON
           </Button>
-          <Button onClick={onCopy}>Copy JSON</Button>
-          <Button onClick={onImportClipboard}>Import From Clipboard</Button>
+          <Button data-testid="copy-json-button" onClick={onCopy}>
+            Copy JSON
+          </Button>
+          <Button data-testid="import-clipboard-json-button" onClick={onImportClipboard}>
+            Import From Clipboard
+          </Button>
         </div>
       </div>
     </Panel>

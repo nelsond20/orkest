@@ -17,6 +17,7 @@ export function NodePalette({ onAddNode }: NodePaletteProps) {
 
           return (
             <button
+              data-testid={`palette-node-${type}`}
               key={type}
               className="w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-2 text-left text-xs text-slate-200 hover:border-slate-600"
               draggable

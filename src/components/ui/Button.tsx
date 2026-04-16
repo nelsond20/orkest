@@ -13,7 +13,7 @@ const variantMap: Record<NonNullable<ButtonProps['variant']>, string> = {
 export function Button({ children, className = '', variant = 'secondary', ...rest }: PropsWithChildren<ButtonProps>) {
   return (
     <button
-      className={`rounded-md px-3 py-2 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${variantMap[variant]} ${className}`}
+      className={`rounded-md px-3 py-2 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-400 disabled:cursor-not-allowed disabled:opacity-50 ${variantMap[variant]} ${className}`}
       {...rest}
     >
       {children}

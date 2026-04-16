@@ -28,7 +28,7 @@ function asReactFlowNode(node: WorkflowNode, hasError: boolean): Node {
     type: node.type,
     position: node.position,
     data: node.config,
-    className: hasError ? 'ring-2 ring-red-500 ring-offset-2 ring-offset-slate-950 rounded-md' : undefined
+    className: hasError ? 'node-error ring-2 ring-red-500 ring-offset-2 ring-offset-slate-950 rounded-md' : undefined
   }
 }
 

@@ -12,7 +12,12 @@ export function StepLog({ steps }: StepLogProps) {
   return (
     <ul className="space-y-2">
       {steps.map((step, index) => (
-        <li key={`${step.nodeId}-${step.status}-${index}`} className="rounded-md border border-slate-800 bg-slate-950 p-2 text-xs">
+        <li
+          data-status={step.status}
+          data-testid="step-log-item"
+          key={`${step.nodeId}-${step.status}-${index}`}
+          className="rounded-md border border-slate-800 bg-slate-950 p-2 text-xs"
+        >
           <div className="flex items-center justify-between gap-2">
             <span className="font-semibold text-slate-200">
               {step.nodeId} · {step.nodeType}

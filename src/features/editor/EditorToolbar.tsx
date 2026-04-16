@@ -28,25 +28,36 @@ export function EditorToolbar({
   return (
     <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-slate-800 bg-slate-900/70 p-3">
       <input
+        data-testid="workflow-name-input"
         className="min-w-[240px] flex-1 rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-blue-500"
         onChange={(event) => onWorkflowNameChange(event.target.value)}
         placeholder="Workflow name"
         value={workflowName}
       />
-      <Button onClick={() => onTabChange('canvas')} variant={activeTab === 'canvas' ? 'primary' : 'ghost'}>
+      <Button data-testid="tab-canvas-button" onClick={() => onTabChange('canvas')} variant={activeTab === 'canvas' ? 'primary' : 'ghost'}>
         Canvas
       </Button>
-      <Button onClick={() => onTabChange('json')} variant={activeTab === 'json' ? 'primary' : 'ghost'}>
+      <Button data-testid="tab-json-button" onClick={() => onTabChange('json')} variant={activeTab === 'json' ? 'primary' : 'ghost'}>
         JSON
       </Button>
-      <Button onClick={onValidate}>Validate</Button>
-      <Button onClick={onSave}>Save</Button>
-      <Button onClick={onRun} variant="primary">
+      <Button data-testid="validate-workflow-button" onClick={onValidate}>
+        Validate
+      </Button>
+      <Button data-testid="save-workflow-button" onClick={onSave}>
+        Save
+      </Button>
+      <Button data-testid="run-workflow-button" onClick={onRun} variant="primary">
         Run
       </Button>
-      <Button onClick={onExportJson}>Export JSON</Button>
-      <Button onClick={onImportJson}>Import JSON</Button>
-      <Button onClick={onFitView}>Fit View</Button>
+      <Button data-testid="export-json-button" onClick={onExportJson}>
+        Export JSON
+      </Button>
+      <Button data-testid="import-json-button" onClick={onImportJson}>
+        Import JSON
+      </Button>
+      <Button data-testid="fit-view-button" onClick={onFitView}>
+        Fit View
+      </Button>
     </div>
   )
 }

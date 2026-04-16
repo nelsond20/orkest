@@ -102,6 +102,7 @@ export function SimulatorPage() {
       <Panel className="h-full" title="Simulator Canvas">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Button
+            data-testid="start-step-mode-button"
             onClick={async () => {
               if (!applyMockInput()) {
                 return
@@ -114,6 +115,7 @@ export function SimulatorPage() {
             Start Step-by-step
           </Button>
           <Button
+            data-testid="start-auto-mode-button"
             onClick={async () => {
               if (!applyMockInput()) {
                 return
@@ -124,8 +126,10 @@ export function SimulatorPage() {
           >
             Auto-run
           </Button>
-          <Button onClick={step}>Next Step</Button>
-          <Button onClick={reset} variant="ghost">
+          <Button data-testid="next-step-button" onClick={step}>
+            Next Step
+          </Button>
+          <Button data-testid="reset-run-button" onClick={reset} variant="ghost">
             Reset
           </Button>
         </div>
@@ -149,7 +153,9 @@ export function SimulatorPage() {
 
         <Panel title="Run Status">
           <p className="text-xs text-slate-300">Workflow: {workflow.name}</p>
-          <p className="mt-1 text-xs text-slate-300">Run status: {run?.status ?? 'idle'}</p>
+          <p className="mt-1 text-xs text-slate-300" data-testid="run-status-text">
+            Run status: {run?.status ?? 'idle'}
+          </p>
           <p className="mt-1 text-xs text-slate-400">Active node: {activeNodeId ?? 'none'}</p>
         </Panel>
 
