@@ -128,6 +128,17 @@ export function WorkflowListPage() {
     return true
   }
 
+  const deleteWorkflow = (workflow: WorkflowDef) => {
+    const confirmed = window.confirm(`Delete workflow "${workflow.name}"?`)
+
+    if (!confirmed) {
+      return
+    }
+
+    persistence.deleteWorkflow(workflow.id)
+    reload()
+  }
+
   return (
     <div className="space-y-4">
       <Panel className="p-1">
@@ -179,19 +190,34 @@ export function WorkflowListPage() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {workflows.map((workflow) => (
-            <button
+            <div
               data-testid={`workflow-card-${workflow.id}`}
               key={workflow.id}
-              className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-left hover:border-slate-600"
-              onClick={() => navigate(`/editor/${workflow.id}`)}
-              type="button"
+              className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 text-left"
             >
               <p className="text-sm font-semibold text-slate-100">{workflow.name}</p>
               <p className="mt-2 text-xs text-slate-400">Updated: {new Date(workflow.updatedAt).toLocaleString()}</p>
               <p className="mt-1 text-xs text-slate-500">
                 {workflow.nodes.length} nodes · {workflow.edges.length} edges
               </p>
-            </button>
+              <div className="mt-3 flex items-center gap-2">
+                <Button
+                  data-testid={`workflow-open-button-${workflow.id}`}
+                  onClick={() => navigate(`/editor/${workflow.id}`)}
+                  variant="primary"
+                >
+                  Open
+                </Button>
+                <Button
+                  data-testid={`workflow-delete-button-${workflow.id}`}
+                  className="bg-red-700 text-white hover:bg-red-600"
+                  onClick={() => deleteWorkflow(workflow)}
+                  variant="secondary"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}
