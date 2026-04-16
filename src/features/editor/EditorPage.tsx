@@ -13,13 +13,14 @@ import ReactFlow, {
   type ReactFlowInstance
 } from 'reactflow'
 import 'reactflow/dist/style.css'
-import { useNavigate, useParams } from 'react-router-dom'
-import type { WorkflowNode, WorkflowEdge, NodeType } from '../../engine/workflow.types'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import type { NodeType, WorkflowEdge, WorkflowNode } from '../../engine/workflow.types'
 import { nodeDefinitions } from '../../nodes/node-registry'
-import { useEditorStore } from './editor.store'
-import { NodePalette } from './NodePalette'
+import { JsonViewPanel } from '../json-view/JsonViewPanel'
 import { ConfigPanel } from './ConfigPanel'
+import { useEditorStore } from './editor.store'
 import { EditorToolbar } from './EditorToolbar'
+import { NodePalette } from './NodePalette'
 
 function asReactFlowNode(node: WorkflowNode, hasError: boolean): Node {
   return {
@@ -108,12 +109,15 @@ function isValidConnection(connection: Connection, nodesById: Map<string, Workfl
 export function EditorPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeTab = searchParams.get('tab') === 'json' ? 'json' : 'canvas'
   const [flowInstance, setFlowInstance] = useState<ReactFlowInstance | null>(null)
 
   const {
     workflow,
     selectedNodeId,
     validation,
+    jsonSync,
     loadWorkflow,
     updateWorkflowName,
     addNode,
@@ -125,6 +129,7 @@ export function EditorPage() {
     saveWorkflow,
     validate,
     exportJson,
+    setJsonDraft,
     importJson
   } = useEditorStore()
 
@@ -229,12 +234,35 @@ export function EditorPage() {
     addNode(type, position)
   }
 
+  const canvas = (
+    <div
+      className="rounded-lg border border-slate-800 bg-slate-900/70"
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={handleDrop}
+    >
+      <ReactFlow
+        edges={edges}
+        fitView
+        isValidConnection={(connection) => isValidConnection(connection, nodesById, workflow.edges)}
+        nodeTypes={nodeTypes}
+        nodes={nodes}
+        onConnect={handleConnect}
+        onEdgesChange={handleEdgesChange}
+        onInit={setFlowInstance}
+        onNodeClick={(_, node) => setSelectedNode(node.id)}
+        onNodesChange={handleNodesChange}
+      >
+        <Background color="#334155" gap={18} />
+      </ReactFlow>
+    </div>
+  )
+
   return (
     <div className="flex h-full flex-col">
       <EditorToolbar
+        activeTab={activeTab}
         onExportJson={async () => {
-          const text = exportJson()
-          await navigator.clipboard.writeText(text)
+          await navigator.clipboard.writeText(exportJson())
         }}
         onFitView={() => flowInstance?.fitView({ padding: 0.1 })}
         onImportJson={() => {
@@ -250,6 +278,15 @@ export function EditorPage() {
           navigate(`/runs/${workflow.id}`)
         }}
         onSave={saveWorkflow}
+        onTabChange={(nextTab) => {
+          if (nextTab === 'canvas') {
+            searchParams.delete('tab')
+            setSearchParams(searchParams)
+            return
+          }
+
+          setSearchParams({ tab: 'json' })
+        }}
         onValidate={() => {
           validate()
         }}
@@ -257,37 +294,38 @@ export function EditorPage() {
         workflowName={workflow.name}
       />
 
-      <div className="grid flex-1 grid-cols-[260px_1fr_320px] gap-3">
-        <NodePalette onAddNode={handleAddNode} />
-
-        <div
-          className="rounded-lg border border-slate-800 bg-slate-900/70"
-          onDragOver={(event) => event.preventDefault()}
-          onDrop={handleDrop}
-        >
-          <ReactFlow
-            edges={edges}
-            fitView
-            isValidConnection={(connection) => isValidConnection(connection, nodesById, workflow.edges)}
-            nodeTypes={nodeTypes}
-            nodes={nodes}
-            onConnect={handleConnect}
-            onEdgesChange={handleEdgesChange}
-            onInit={setFlowInstance}
-            onNodeClick={(_, node) => setSelectedNode(node.id)}
-            onNodesChange={handleNodesChange}
-          >
-            <Background color="#334155" gap={18} />
-          </ReactFlow>
+      {activeTab === 'json' ? (
+        <div className="grid flex-1 grid-cols-[1fr_420px] gap-3">
+          {canvas}
+          <JsonViewPanel
+            error={jsonSync.error}
+            onApply={() => {
+              importJson(jsonSync.draft)
+            }}
+            onChange={setJsonDraft}
+            onCopy={async () => {
+              await navigator.clipboard.writeText(jsonSync.draft)
+            }}
+            onImportClipboard={async () => {
+              const clipboardText = await navigator.clipboard.readText()
+              setJsonDraft(clipboardText)
+              importJson(clipboardText)
+            }}
+            value={jsonSync.draft}
+          />
         </div>
-
-        <ConfigPanel
-          errors={selectedNodeId ? errorsByNode.get(selectedNodeId) ?? [] : []}
-          onApplyConfig={updateNodeConfig}
-          onDeleteNode={deleteNode}
-          selectedNode={selectedNode}
-        />
-      </div>
+      ) : (
+        <div className="grid flex-1 grid-cols-[260px_1fr_320px] gap-3">
+          <NodePalette onAddNode={handleAddNode} />
+          {canvas}
+          <ConfigPanel
+            errors={selectedNodeId ? errorsByNode.get(selectedNodeId) ?? [] : []}
+            onApplyConfig={updateNodeConfig}
+            onDeleteNode={deleteNode}
+            selectedNode={selectedNode}
+          />
+        </div>
+      )}
     </div>
   )
 }

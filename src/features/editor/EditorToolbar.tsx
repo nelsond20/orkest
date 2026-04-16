@@ -2,6 +2,8 @@ import { Button } from '../../components/ui/Button'
 
 interface EditorToolbarProps {
   workflowName: string
+  activeTab: 'canvas' | 'json'
+  onTabChange: (tab: 'canvas' | 'json') => void
   onWorkflowNameChange: (value: string) => void
   onValidate: () => void
   onRun: () => void
@@ -13,6 +15,8 @@ interface EditorToolbarProps {
 
 export function EditorToolbar({
   workflowName,
+  activeTab,
+  onTabChange,
   onWorkflowNameChange,
   onValidate,
   onRun,
@@ -29,6 +33,12 @@ export function EditorToolbar({
         placeholder="Workflow name"
         value={workflowName}
       />
+      <Button onClick={() => onTabChange('canvas')} variant={activeTab === 'canvas' ? 'primary' : 'ghost'}>
+        Canvas
+      </Button>
+      <Button onClick={() => onTabChange('json')} variant={activeTab === 'json' ? 'primary' : 'ghost'}>
+        JSON
+      </Button>
       <Button onClick={onValidate}>Validate</Button>
       <Button onClick={onSave}>Save</Button>
       <Button onClick={onRun} variant="primary">

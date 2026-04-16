@@ -31,6 +31,7 @@ interface EditorState {
   saveWorkflow: () => void
   validate: () => ValidationResult | undefined
   exportJson: () => string
+  setJsonDraft: (draft: string) => void
   importJson: (jsonText: string) => boolean
 }
 
@@ -264,6 +265,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }
 
     return JSON.stringify(workflow, null, 2)
+  },
+
+  setJsonDraft(draft) {
+    set({
+      jsonSync: {
+        draft,
+        error: undefined
+      }
+    })
   },
 
   importJson(jsonText) {
