@@ -189,6 +189,16 @@ export function EditorPage() {
     return <p className="text-sm text-slate-400">Workflow not found.</p>
   }
 
+  const buildDownloadFileName = (name: string): string => {
+    const normalized = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+    return `${normalized || 'workflow'}.json`
+  }
+
   const handleAddNode = (type: NodeType) => {
     if (flowInstance && canvasContainerRef.current) {
       const rect = canvasContainerRef.current.getBoundingClientRect()
@@ -315,7 +325,16 @@ export function EditorPage() {
       <EditorToolbar
         activeTab={activeTab}
         onExportJson={async () => {
-          await navigator.clipboard.writeText(exportJson())
+          const json = exportJson()
+          const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+          const downloadUrl = URL.createObjectURL(blob)
+          const anchor = document.createElement('a')
+          anchor.href = downloadUrl
+          anchor.download = buildDownloadFileName(workflow.name)
+          document.body.appendChild(anchor)
+          anchor.click()
+          document.body.removeChild(anchor)
+          URL.revokeObjectURL(downloadUrl)
         }}
         onFitView={() => flowInstance?.fitView({ padding: 0.1 })}
         onImportJson={() => {
@@ -379,6 +398,7 @@ export function EditorPage() {
           />
         </div>
       )}
+
     </div>
   )
 }
