@@ -1,2 +1,12 @@
 .superpowers/
 docs/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
